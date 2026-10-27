@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>융합 교과 맞춤형 AI 튜터</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+      background-color: #f4f6f9;
+      color: #333333;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      padding: 28px 24px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 0.95rem;
+      color: #64748b;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background-color: #f8fafc;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.99);
+    }
+
+    .btn-primary {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: #475569;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cbd5e1;
+    }
+
+    .btn:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .status-message {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #2563eb;
+      font-weight: 600;
+      display: none;
+    }
+
+    .result-container {
+      margin-top: 28px;
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      display: none;
+      white-space: pre-wrap;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #1e293b;
+    }
+
+    .result-container details {
+      margin-top: 16px;
+      padding: 12px;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .result-container summary {
+      font-weight: 600;
+      color: #2563eb;
+      outline: none;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: rgba(15, 23, 42, 0.9);
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      pointer-events: none;
+      text-align: center;
+      max-width: 90%;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>🎓 융합 교과 맞춤형 AI 튜터</h1>
+      <p>어려운 교과 개념을 내가 좋아하는 관심사와 연결해 공부해 보세요!</p>
+    </div>
+
+    <form id="tutorForm" onsubmit="return false;">
+      <div class="form-group">
+        <label for="apiKey">Gemini API Key</label>
+        <input type="password" id="apiKey" class="form-control" placeholder="API 키를 입력하세요">
+      </div>
+
+      <div class="form-group">
+        <label for="subject">과목 선택</label>
+        <select id="subject" class="form-control">
+          <option value="물리">물리</option>
+          <option value="지리">지리</option>
+          <option value="정보/AI">정보/AI</option>
+          <option value="경영/경제">경영/경제</option>
+          <option value="기타 교과">기타 교과</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="concept">교과 개념</label>
+        <input type="text" id="concept" class="form-control" placeholder="예: 가속도, 기후 변화, 알고리즘 등">
+      </div>
+
+      <div class="form-group">
+        <label for="interest">나의 관심사</label>
+        <input type="text" id="interest" class="form-control" placeholder="예: 리그 오브 레전드, 아이돌, 축구 등">
+      </div>
+
+      <div class="button-group">
+        <button type="button" id="submitBtn" class="btn btn-primary" onclick="handleExplain()">선생님, 설명해 주세요!</button>
+        <button type="button" class="btn btn-secondary" onclick="handleClear()">이전 답변 및 학습 캐시 초기화</button>
+      </div>
+    </form>
+
+    <div id="statusMessage" class="status-message"></div>
+    <div id="resultContainer" class="result-container"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let toastTimeout = null;
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function getTodayString() {
+      const today = new Date();
+      return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    }
+
+    function checkDailyLimit() {
+      const todayStr = getTodayString();
+      const lastDate = localStorage.getItem('usage_date');
+      let count = parseInt(localStorage.getItem('usage_count') || '0', 10);
+
+      if (lastDate !== todayStr) {
+        localStorage.setItem('usage_date', todayStr);
+        localStorage.setItem('usage_count', '0');
+        return true;
+      }
+
+      if (count >= 5) {
+        showToast('무료 한도 보호를 위해 하루 5회까지만 이용 가능합니다.');
+        return false;
+      }
+
+      return true;
+    }
+
+    function incrementDailyLimit() {
+      const count = parseInt(localStorage.getItem('usage_count') || '0', 10);
+      localStorage.setItem('usage_count', (count + 1).toString());
+    }
+
+    function sanitizeResponseText(text) {
+      return text.replace(/[\*#]/g, '');
+    }
+
+    async function fetchWithBackoff(url, requestBody, maxRetries = 3) {
+      const statusEl = document.getElementById('statusMessage');
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (response.ok) {
+            statusEl.style.display = 'none';
+            return await response.json();
+          }
+
+          if (response.status === 429 || response.status === 503) {
+            if (attempt <= maxRetries) {
+              const waitTimeSec = Math.pow(2, attempt);
+              statusEl.style.display = 'block';
+              statusEl.textContent = `서버 요청이 많아 재시도 중입니다... (${attempt}/${maxRetries}회차, ${waitTimeSec}초 대기 중)`;
+              await new Promise(resolve => setTimeout(resolve, waitTimeSec * 1000));
+              continue;
+            }
+          }
+
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || `API 오류 (상태 코드: ${response.status})`);
+        } catch (error) {
+          if (attempt === maxRetries) {
+            statusEl.style.display = 'none';
+            throw error;
+          }
+        }
+      }
+    }
+
+    async function handleExplain() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const subject = document.getElementById('subject').value;
+      const concept = document.getElementById('concept').value.trim();
+      const interest = document.getElementById('interest').value.trim();
+
+      if (!apiKey || !concept || !interest) {
+        showToast('API Key, 교과 개념, 관심사를 모두 입력해 주세요.');
+        return;
+      }
+
+      const cacheKey = `cache_${subject}_${concept}_${interest}`;
+      const cachedData = localStorage.getItem(cacheKey);
+
+      const resultContainer = document.getElementById('resultContainer');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (cachedData) {
+        resultContainer.innerHTML = sanitizeResponseText(cachedData);
+        resultContainer.style.display = 'block';
+        showToast('캐시된 데이터를 즉시 불러왔습니다.');
+        return;
+      }
+
+      if (!checkDailyLimit()) {
+        return;
+      }
+
+      const promptText = `너는 고등학교 1~2학년 학생들의 눈높이에 맞춰 어려운 교과 개념을 쉽고 재미있게 가르치는 '${subject}' 과목의 일타 강사야.
+
+학생이 질문한 개념: ${concept}
+학생의 관심사: ${interest}
+
+[중요 지시사항]
+1. 별표(*), 샵(#) 등 마크다운 기호는 절대 사용하지 마. 텍스트 강조도 하지 마.
+2. 오직 일반 텍스트와 <details>, <summary> 태그만 사용해.
+3. 인사말, 서론 생략하고 바로 아래 양식으로 출력해.
+
+[💡 찰떡 비유]
+(관심사 '${interest}'를 활용한 재미있는 비유 설명)
+
+[📚 핵심 원리]
+(개념 '${concept}'의 교과서적 원리 설명)
+
+[🎯 확인 퀴즈]
+(객관식 4지 선다형 1문제)
+
+<details>
+<summary>👉 정답 및 해설 확인하기 (클릭)</summary>
+정답: O번
+해설: (왜 그 번호가 정답인지 명확하게 설명)
+</details>`;
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+      const requestBody = {
+        contents: [
+          {
+            parts: [{ text: promptText }]
+          }
+        ]
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '설명을 생성하고 있습니다...';
+
+      try {
+        const data = await fetchWithBackoff(endpoint, requestBody);
+        let outputText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        outputText = sanitizeResponseText(outputText);
+
+        if (outputText) {
+          localStorage.setItem(cacheKey, outputText);
+          incrementDailyLimit();
+
+          resultContainer.innerHTML = outputText;
+          resultContainer.style.display = 'block';
+          showToast('성공적으로 답변을 가져왔습니다.');
+        } else {
+          showToast('응답을 생성하지 못했습니다. 다시 시도해 주세요.');
+        }
+      } catch (err) {
+        showToast(`오류 발생: ${err.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '선생님, 설명해 주세요!';
+        document.getElementById('statusMessage').style.display = 'none';
+      }
+    }
+
+    function handleClear() {
+      localStorage.clear();
+      const resultContainer = document.getElementById('resultContainer');
+      resultContainer.innerHTML = '';
+      resultContainer.style.display = 'none';
+      showToast('이전 답변 및 학습 캐시가 완전히 초기화되었습니다.');
+    }
+  </script>
+</body>
+</html>
